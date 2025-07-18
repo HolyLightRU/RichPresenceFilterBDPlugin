@@ -1,7 +1,7 @@
 /**
  * @name RichPresenceFilter
  * @description Фильтрует RichPresence активность по блэклисту из настроек
- * @version 2.2.1
+ * @version 2.2.2
  * @author HolyLight
  * @source https://github.com/HolyLightRU/RichPresenceFilterBDPlugin
  */
@@ -10,7 +10,9 @@ module.exports = class RichPresenceFilter {
     constructor() {
         this.defaultSettings = {
             blacklist: [],
-            enabled: true
+            enabled: true,
+            checkApplicationNames: true,
+            checkState: true
         };
         
         this.settings = {...this.defaultSettings};
@@ -218,24 +220,110 @@ module.exports = class RichPresenceFilter {
 
     patchActivityUpdate() {
         const rpcModule = this.api.Webpack.getModule(this.api.Webpack.Filters.byKeys("dispatch", "_subscriptions"));
-        
         if (rpcModule) {
             BdApi.Patcher.before("RichPresenceFilter", rpcModule, "dispatch", (_, args) => {
                 if (!this.settings.enabled) return;
                 
                 const [action] = args;
-                if (action?.type !== "LOCAL_ACTIVITY_UPDATE" || !action.activity) return;
-                
-                const activity = action.activity;
-                if (!activity.name) return;
-                
-                if (this.settings.blacklist.includes(activity.name.toLowerCase())) {
-                    args[0].activity = null;
-                    console.log(`[RichPresenceFilter] Blocked activity: ${activity.name}`);
+                if (!action) return;
+
+                const activityTypes = ["RUNNING_GAMES_CHANGE", "LOCAL_ACTIVITY_UPDATE"];
+                if (!activityTypes.includes(action.type)) return;
+
+                const shouldBlockActivity = (activity) => {
+                    if (!activity) return false;
+                    
+                    const fieldsToCheck = [
+                        activity.name,
+                        activity.application?.name,
+                        activity.details,
+                        activity.state,
+                        activity.assets?.large_text,
+                        activity.assets?.small_text
+                    ].filter(Boolean).map(s => s.toLowerCase());
+
+                    return this.settings.blacklist.some(blacklisted => {
+                        const lowerBlacklisted = blacklisted.toLowerCase();
+                        return fieldsToCheck.some(field => field.includes(lowerBlacklisted));
+                    });
+                };
+
+                if (action.type === "RUNNING_GAMES_CHANGE") {
+                    const games = action.games || action.runningGames || [];
+                    if (!Array.isArray(games)) return;
+
+                    const filteredGames = games.filter(game => !shouldBlockActivity(game));
+                    
+                    if (filteredGames.length < games.length) {
+                        if ('games' in action) {
+                            args[0].games = filteredGames;
+                        } else {
+                            args[0].runningGames = filteredGames;
+                        }
+                    }
+                    return;
+                }
+
+                if (action.type === "LOCAL_ACTIVITY_UPDATE" && action.activity) {
+                    if (shouldBlockActivity(action.activity)) {
+                        args[0].activity = null;
+                    }
                 }
             });
-        } else {
-            console.error("[RichPresenceFilter] Could not find RPC module to patch");
+        }
+
+        const presenceStore = this.api.Webpack.getModule(this.api.Webpack.Filters.byProps("getActivities"));
+        if (presenceStore) {
+            BdApi.Patcher.after("RichPresenceFilter", presenceStore, "getActivities", (_, __, res) => {
+                if (!this.settings.enabled || !res) return res;
+                
+                return res.filter(activity => {
+                    if (!activity) return false;
+                    
+                    const fieldsToCheck = [
+                        activity.name,
+                        activity.application?.name,
+                        activity.details,
+                        activity.state,
+                        activity.assets?.large_text,
+                        activity.assets?.small_text
+                    ].filter(Boolean).map(s => s.toLowerCase());
+
+                    return !this.settings.blacklist.some(blacklisted => {
+                        const lowerBlacklisted = blacklisted.toLowerCase();
+                        return fieldsToCheck.some(field => field.includes(lowerBlacklisted));
+                    });
+                });
+            });
+        }
+
+        const ipcModule = this.api.Webpack.getModule(this.api.Webpack.Filters.byKeys("RPCServer"));
+        if (ipcModule) {
+            BdApi.Patcher.before("RichPresenceFilter", ipcModule, "handleSocketMessage", (_, args) => {
+                if (!this.settings.enabled) return;
+                
+                const [message] = args;
+                if (message?.cmd === "SET_ACTIVITY" && message.args?.activity) {
+                    const activity = message.args.activity;
+                    const fieldsToCheck = [
+                        activity.name,
+                        activity.application?.name,
+                        activity.details,
+                        activity.state,
+                        activity.assets?.large_text,
+                        activity.assets?.small_text
+                    ].filter(Boolean).map(s => s.toLowerCase());
+
+                    const shouldBlock = this.settings.blacklist.some(blacklisted => {
+                        const lowerBlacklisted = blacklisted.toLowerCase();
+                        return fieldsToCheck.some(field => field.includes(lowerBlacklisted));
+                    });
+
+                    if (shouldBlock) {
+                        args[0].args.activity = null;
+                    }
+                }
+            });
         }
     }
 
@@ -271,6 +359,18 @@ module.exports = class RichPresenceFilter {
                 const newBlacklist = [...this.settings.blacklist];
                 newBlacklist[index] = value.toLowerCase();
                 this.settings.blacklist = newBlacklist;
+                this.saveSettings();
+                forceUpdate();
+            };
+
+            const toggleCheckApplicationNames = () => {
+                this.settings.checkApplicationNames = !this.settings.checkApplicationNames;
+                this.saveSettings();
+                forceUpdate();
+            };
+
+            const toggleCheckState = () => {
+                this.settings.checkState = !this.settings.checkState;
                 this.saveSettings();
                 forceUpdate();
             };
