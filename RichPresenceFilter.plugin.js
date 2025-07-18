@@ -1,7 +1,7 @@
 /**
  * @name RichPresenceFilter
  * @description Фильтрует активность по String blackList из настроек
- * @version 2.1.3
+ * @version 2.1.4
  * @author HolyLightRU
  * @source https://github.com/HolyLightRU/RichPresenceFilterBDPlugin
  */
@@ -202,78 +202,99 @@ module.exports = class RichPresenceFilter {
 
     getSettingsPanel() {
         const { React } = BdApi;
-        
-        return React.createElement("div", {className: "rich-presence-filter-settings"},
-            React.createElement("div", {className: "rich-presence-filter-header"},
-                React.createElement("div", {className: "rich-presence-filter-icon"}),
-                React.createElement("h3", {className: "rich-presence-filter-title"}, "RichPresence Filter")
-            ),
-            
-            React.createElement("div", {className: "rich-presence-filter-toggle"},
-                React.createElement("label", null,
-                    React.createElement("input", {
-                        type: "checkbox",
-                        checked: this.settings.enabled,
-                        onChange: e => {
-                            this.settings.enabled = e.target.checked;
-                            this.saveSettings();
-                        }
-                    }),
-                    " Enable Plugin"
-                )
-            ),
-            
-            React.createElement("div", {className: "rich-presence-filter-section"},
-                React.createElement("h4", {className: "rich-presence-filter-section-title"}, "Blacklisted Activities"),
-                React.createElement("p", {className: "rich-presence-filter-section-desc"},
-                    "Activities matching these names will be blocked from showing in your profile."
+        const { useState } = React;
+
+        const SettingsComponent = () => {
+            const [updateFlag, setUpdateFlag] = useState(false);
+            const [newActivity, setNewActivity] = useState("");
+
+            const forceUpdate = () => setUpdateFlag(!updateFlag);
+
+            const handleAddActivity = () => {
+                if (newActivity.trim()) {
+                    this.settings.blacklist = [
+                        ...this.settings.blacklist,
+                        newActivity.trim().toLowerCase()
+                    ];
+                    this.saveSettings();
+                    setNewActivity("");
+                    forceUpdate();
+                }
+            };
+
+            const handleRemoveActivity = (index) => {
+                this.settings.blacklist = this.settings.blacklist.filter((_, i) => i !== index);
+                this.saveSettings();
+                forceUpdate();
+            };
+
+            const handleActivityChange = (index, value) => {
+                const newBlacklist = [...this.settings.blacklist];
+                newBlacklist[index] = value.toLowerCase();
+                this.settings.blacklist = newBlacklist;
+                this.saveSettings();
+                forceUpdate();
+            };
+
+            return React.createElement("div", {className: "rich-presence-filter-settings"},
+                React.createElement("div", {className: "rich-presence-filter-header"},
+                    React.createElement("div", {className: "rich-presence-filter-icon"}),
+                    React.createElement("h3", {className: "rich-presence-filter-title"}, "RichPresence Filter")
                 ),
                 
-                React.createElement("div", null,
-                    this.settings.blacklist.map((activity, index) =>
-                        React.createElement("div", {key: index, className: "rich-presence-filter-entry"},
-                            React.createElement("input", {
-                                type: "text",
-                                value: activity,
-                                onChange: e => {
-                                    const newBlacklist = [...this.settings.blacklist];
-                                    newBlacklist[index] = e.target.value.toLowerCase();
-                                    this.settings.blacklist = newBlacklist;
-                                    this.saveSettings();
-                                }
-                            }),
-                            React.createElement("button", {
-                                onClick: () => {
-                                    this.settings.blacklist = this.settings.blacklist.filter((_, i) => i !== index);
-                                    this.saveSettings();
-                                }
-                            }, "Remove")
-                        )
+                React.createElement("div", {className: "rich-presence-filter-toggle"},
+                    React.createElement("label", null,
+                        React.createElement("input", {
+                            type: "checkbox",
+                            checked: this.settings.enabled,
+                            onChange: e => {
+                                this.settings.enabled = e.target.checked;
+                                this.saveSettings();
+                                forceUpdate();
+                            }
+                        }),
+                        " Enable Plugin"
                     )
                 ),
                 
-                React.createElement("div", {className: "rich-presence-filter-add"},
-                    React.createElement("input", {
-                        type: "text",
-                        id: "newActivity",
-                        placeholder: "Enter activity name to block"
-                    }),
-                    React.createElement("button", {
-                        onClick: () => {
-                            const input = document.getElementById("newActivity");
-                            if (input.value.trim()) {
-                                this.settings.blacklist = [
-                                    ...this.settings.blacklist,
-                                    input.value.trim().toLowerCase()
-                                ];
-                                input.value = "";
-                                this.saveSettings();
-                            }
-                        }
-                    }, "Add Activity")
+                React.createElement("div", {className: "rich-presence-filter-section"},
+                    React.createElement("h4", {className: "rich-presence-filter-section-title"}, "Blacklisted Activities"),
+                    React.createElement("p", {className: "rich-presence-filter-section-desc"},
+                        "Activities matching these names will be blocked from showing in your profile."
+                    ),
+                    
+                    React.createElement("div", null,
+                        this.settings.blacklist.map((activity, index) =>
+                            React.createElement("div", {key: index, className: "rich-presence-filter-entry"},
+                                React.createElement("input", {
+                                    type: "text",
+                                    value: activity,
+                                    onChange: e => handleActivityChange(index, e.target.value)
+                                }),
+                                React.createElement("button", {
+                                    onClick: () => handleRemoveActivity(index)
+                                }, "Remove")
+                            )
+                        )
+                    ),
+                    
+                    React.createElement("div", {className: "rich-presence-filter-add"},
+                        React.createElement("input", {
+                            type: "text",
+                            value: newActivity,
+                            placeholder: "Enter activity name to block",
+                            onChange: e => setNewActivity(e.target.value),
+                            onKeyDown: e => e.key === "Enter" && handleAddActivity()
+                        }),
+                        React.createElement("button", {
+                            onClick: handleAddActivity
+                        }, "Add Activity")
+                    )
                 )
-            )
-        );
+            );
+        };
+
+        return React.createElement(SettingsComponent);
     }
 
     saveSettings() {
