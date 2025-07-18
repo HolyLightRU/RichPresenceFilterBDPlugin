@@ -1,7 +1,7 @@
 /**
  * @name RichPresenceFilter
  * @description Фильтрует активность по String blackList из настроек
- * @version 2.1.4
+ * @version 2.2.0
  * @author HolyLightRU
  * @source https://github.com/HolyLightRU/RichPresenceFilterBDPlugin
  */
@@ -26,148 +26,187 @@ module.exports = class RichPresenceFilter {
         
         BdApi.injectCSS("RichPresenceFilter", `
             .rich-presence-filter-settings {
-                padding: 16px;
-                background: rgba(255, 235, 238, 0.1);
-                border-radius: 8px;
+                padding: 20px;
+                background: rgba(25, 28, 36, 0.8);
+                border-radius: 12px;
                 font-family: 'Whitney', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                border: 1px solid rgba(255, 143, 171, 0.2);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                backdrop-filter: blur(10px);
             }
             
             .rich-presence-filter-header {
                 display: flex;
                 align-items: center;
-                margin-bottom: 16px;
-                color: #ff8fab;
+                margin-bottom: 20px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid rgba(255, 143, 171, 0.2);
             }
             
             .rich-presence-filter-icon {
-                width: 24px;
-                height: 24px;
+                width: 28px;
+                height: 28px;
                 margin-right: 10px;
-                background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2ZmOGZhYiIgZD0iTTEyLDJBMTAsMTAgMCAwLDAgMiwxMkExMCwxMCAwIDAsMCAxMiwyMkExMCwxMCAwIDAsMCAyMiwxMkExMCwxMCAwIDAsMCAxMiwyTTEyLDRBOCw4IDAgMCwxIDIwLDEyQTgsOCAwIDAsMSAxMiwyMEE4LDggMCAwLDEgNCwxMkE4LDggMCAwLDEgMTIsNE0xMiwxMEEyLDIgMCAwLDAgMTAsMTJBMiwyIDAgMCwwIDEyLDE0QTIsMiAwIDAsMCAxNCwxMkEyLDIgMCAwLDAgMTIsMTBNNywxMEEyLDIgMCAwLDAgNSwxMkEyLDIgMCAwLDAgNywxNEEyLDIgMCAwLDAgOSwxMkEyLDIgMCAwLDAgNywxME0xNywxMEEyLDIgMCAwLDAgMTUsMTJBMiwyIDAgMCwwIDE3LDE0QTIsMiAwIDAsMCAxOSwxMkEyLDIgMCAwLDAgMTcsMTAiIC8+PC9zdmc+');
-                background-size: contain;
+                background: linear-gradient(135deg, #ff8fab, #90e0ef);
+                -webkit-mask: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyLDJBMTAsMTAgMCAwLDAgMiwxMkExMCwxMCAwIDAsMCAxMiwyMkExMCwxMCAwIDAsMCAyMiwxMkExMCwxMCAwIDAsMCAxMiwyTTEyLDRBOCw4IDAgMCwxIDIwLDEyQTgsOCAwIDAsMSAxMiwyMEE4LDggMCAwLDEgNCwxMkE4LDggMCAwLDEgMTIsNE0xMiwxMEEyLDIgMCAwLDAgMTAsMTJBMiwyIDAgMCwwIDEyLDE0QTIsMiAwIDAsMCAxNCwxMkEyLDIgMCAwLDAgMTIsMTBNNywxMEEyLDIgMCAwLDAgNSwxMkEyLDIgMCAwLDAgNywxNEEyLDIgMCAwLDAgOSwxMkEyLDIgMCAwLDAgNywxME0xNywxMEEyLDIgMCAwLDAgMTUsMTJBMiwyIDAgMCwwIDE3LDE0QTIsMiAwIDAsMCAxOSwxMkEyLDIgMCAwLDAgMTcsMTAiIC8+PC9zdmc+') no-repeat center;
+                mask: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyLDJBMTAsMTAgMCAwLDAgMiwxMkExMCwxMCAwIDAsMCAxMiwyMkExMCwxMCAwIDAsMCAyMiwxMkExMCwxMCAwIDAsMCAxMiwyTTEyLDRBOCw4IDAgMCwxIDIwLDEyQTgsOCAwIDAsMSAxMiwyMEE4LDggMCAwLDEgNCwxMkE4LDggMCAwLDEgMTIsNE0xMiwxMEEyLDIgMCAwLDAgMTAsMTJBMiwyIDAgMCwwIDEyLDE0QTIsMiAwIDAsMCAxNCwxMkEyLDIgMCAwLDAgMTIsMTBNNywxMEEyLDIgMCAwLDAgNSwxMkEyLDIgMCAwLDAgNywxNEEyLDIgMCAwLDAgOSwxMkEyLDIgMCAwLDAgNywxME0xNywxMEEyLDIgMCAwLDAgMTUsMTJBMiwyIDAgMCwwIDE3LDE0QTIsMiAwIDAsMCAxOSwxMkEyLDIgMCAwLDAgMTcsMTAiIC8+PC9zdmc+') no-repeat center;
             }
             
             .rich-presence-filter-title {
-                font-size: 20px;
-                font-weight: 600;
+                font-size: 22px;
+                font-weight: 700;
                 margin: 0;
+                background: linear-gradient(90deg, #ff8fab, #90e0ef);
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
             }
             
-            .rich-presence-filter-toggle {
+            .rich-presence-filter-author {
+                margin-left: auto;
+                font-weight: 600;
+                font-size: 14px;
+                background: linear-gradient(90deg, #ff8fab, #90e0ef);
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
                 display: flex;
                 align-items: center;
-                margin-bottom: 20px;
-                padding: 10px;
-                background: rgba(255, 143, 171, 0.1);
-                border-radius: 6px;
+                gap: 12px;
             }
             
-            .rich-presence-filter-toggle label {
-                display: flex;
+            .rich-presence-filter-social {
+                color: #90e0ef;
+                transition: all 0.3s ease;
+                display: inline-flex;
                 align-items: center;
-                cursor: pointer;
-                font-weight: 500;
-                color: #f8f8f8;
             }
             
-            .rich-presence-filter-toggle input {
-                margin-right: 10px;
-                accent-color: #ff8fab;
-                cursor: pointer;
+            .rich-presence-filter-social:hover {
+                color: #ff8fab;
+                transform: translateY(-2px);
             }
             
             .rich-presence-filter-section {
-                margin-bottom: 16px;
+                margin-bottom: 24px;
                 color: #f8f8f8;
             }
             
             .rich-presence-filter-section-title {
-                font-size: 16px;
+                font-size: 18px;
                 font-weight: 600;
-                margin-bottom: 8px;
-                color: #ff8fab;
+                margin-bottom: 10px;
+                background: linear-gradient(90deg, #ff8fab, #90e0ef);
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
             }
             
             .rich-presence-filter-section-desc {
                 font-size: 14px;
                 opacity: 0.8;
-                margin-bottom: 12px;
+                margin-bottom: 16px;
+                line-height: 1.5;
             }
             
             .rich-presence-filter-entry {
                 display: flex;
-                margin-bottom: 8px;
+                margin-bottom: 10px;
                 align-items: center;
-                background: rgba(255, 143, 171, 0.05);
-                border-radius: 4px;
-                padding: 6px;
-                transition: background 0.2s;
+                background: rgba(255, 143, 171, 0.08);
+                border-radius: 6px;
+                padding: 8px;
+                transition: all 0.3s ease;
+                border: 1px solid rgba(255, 143, 171, 0.1);
             }
             
             .rich-presence-filter-entry:hover {
-                background: rgba(255, 143, 171, 0.1);
+                background: rgba(255, 143, 171, 0.15);
+                border-color: rgba(255, 143, 171, 0.3);
             }
             
             .rich-presence-filter-entry input {
                 flex-grow: 1;
-                margin-right: 8px;
-                padding: 8px;
-                background: rgba(0, 0, 0, 0.2);
-                border: 1px solid rgba(255, 143, 171, 0.3);
-                border-radius: 4px;
+                margin-right: 10px;
+                padding: 10px;
+                background: rgba(10, 12, 16, 0.5);
+                border: 1px solid rgba(255, 143, 171, 0.2);
+                border-radius: 6px;
                 color: #f8f8f8;
                 outline: none;
+                font-size: 14px;
+                transition: all 0.3s ease;
             }
             
             .rich-presence-filter-entry input:focus {
                 border-color: #ff8fab;
+                box-shadow: 0 0 0 2px rgba(255, 143, 171, 0.2);
             }
             
             .rich-presence-filter-entry button {
-                padding: 8px 12px;
-                background: rgba(255, 143, 171, 0.3);
+                padding: 10px 16px;
+                background: linear-gradient(90deg, rgba(255, 143, 171, 0.5), rgba(144, 224, 239, 0.5));
                 border: none;
-                border-radius: 4px;
+                border-radius: 6px;
                 color: white;
                 cursor: pointer;
-                transition: background 0.2s;
+                transition: all 0.3s ease;
+                font-weight: 500;
+                font-size: 14px;
             }
             
             .rich-presence-filter-entry button:hover {
-                background: rgba(255, 143, 171, 0.5);
+                background: linear-gradient(90deg, rgba(255, 143, 171, 0.7), rgba(144, 224, 239, 0.7));
+                transform: translateY(-1px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             }
             
             .rich-presence-filter-add {
                 display: flex;
-                margin-top: 12px;
+                margin-top: 16px;
+                border-radius: 6px;
+                overflow: hidden;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             }
             
             .rich-presence-filter-add input {
                 flex-grow: 1;
-                padding: 8px;
-                background: rgba(0, 0, 0, 0.2);
-                border: 1px solid rgba(255, 143, 171, 0.3);
-                border-radius: 4px 0 0 4px;
+                padding: 12px;
+                background: rgba(10, 12, 16, 0.5);
+                border: 1px solid rgba(255, 143, 171, 0.2);
                 color: #f8f8f8;
                 outline: none;
+                font-size: 14px;
+                transition: all 0.3s ease;
             }
             
             .rich-presence-filter-add input:focus {
                 border-color: #ff8fab;
+                box-shadow: 0 0 0 2px rgba(255, 143, 171, 0.2);
             }
             
             .rich-presence-filter-add button {
-                padding: 8px 16px;
-                background: rgba(255, 143, 171, 0.5);
+                padding: 0 20px;
+                background: linear-gradient(90deg, #ff8fab, #90e0ef);
                 border: none;
-                border-radius: 0 4px 4px 0;
-                color: white;
+                color: #0a0c10;
                 cursor: pointer;
-                transition: background 0.2s;
+                transition: all 0.3s ease;
+                font-weight: 600;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             
             .rich-presence-filter-add button:hover {
-                background: rgba(255, 143, 171, 0.7);
+                background: linear-gradient(90deg, #ff9fba, #a0e9ff);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(255, 143, 171, 0.3);
+            }
+            
+            .rich-presence-filter-add button:active {
+                transform: translateY(0);
             }
         `);
     }
@@ -239,28 +278,44 @@ module.exports = class RichPresenceFilter {
             return React.createElement("div", {className: "rich-presence-filter-settings"},
                 React.createElement("div", {className: "rich-presence-filter-header"},
                     React.createElement("div", {className: "rich-presence-filter-icon"}),
-                    React.createElement("h3", {className: "rich-presence-filter-title"}, "RichPresence Filter")
-                ),
-                
-                React.createElement("div", {className: "rich-presence-filter-toggle"},
-                    React.createElement("label", null,
-                        React.createElement("input", {
-                            type: "checkbox",
-                            checked: this.settings.enabled,
-                            onChange: e => {
-                                this.settings.enabled = e.target.checked;
-                                this.saveSettings();
-                                forceUpdate();
-                            }
-                        }),
-                        " Enable Plugin"
+                    React.createElement("h3", {className: "rich-presence-filter-title"}, "RichPresenceFilter"),
+                    React.createElement("div", {className: "rich-presence-filter-author"},
+                        "HolyLight",
+                        React.createElement("a", {
+                            href: "https://github.com/HolyLightRU",
+                            target: "_blank",
+                            className: "rich-presence-filter-social",
+                            title: "GitHub Repository"
+                        }, React.createElement("svg", {
+                            xmlns: "http://www.w3.org/2000/svg",
+                            width: "18",
+                            height: "18",
+                            fill: "currentColor",
+                            viewBox: "0 0 16 16"
+                        }, React.createElement("path", {
+                            d: "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"
+                        }))),
+                        React.createElement("a", {
+                            href: "https://t.me/notholylab",
+                            target: "_blank",
+                            className: "rich-presence-filter-social",
+                            title: "Telegram"
+                        }, React.createElement("svg", {
+                            xmlns: "http://www.w3.org/2000/svg",
+                            width: "18",
+                            height: "18",
+                            fill: "currentColor",
+                            viewBox: "0 0 16 16"
+                        }, React.createElement("path", {
+                            d: "M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.287 5.906q-1.168.486-4.666 2.01-.567.225-.595.442c-.03.243.275.339.69.47l.175.055c.408.133.958.288 1.243.294q.39.01.868-.32 3.269-2.206 3.374-2.23c.05-.012.12-.026.166.016s.042.12.037.141c-.03.129-1.227 1.241-1.846 1.817-.193.18-.33.307-.358.336a8 8 0 0 1-.188.186c-.38.366-.664.64.015 1.088.327.216.589.393.85.571.284.194.568.387.936.629q.14.092.27.187c.331.236.63.448.997.414.214-.02.435-.22.547-.82.265-1.417.786-4.486.906-5.751a1.4 1.4 0 0 0-.013-.315.34.34 0 0 0-.114-.217.53.53 0 0 0-.31-.093c-.3.005-.763.166-2.984 1.09"
+                        })))
                     )
                 ),
                 
                 React.createElement("div", {className: "rich-presence-filter-section"},
-                    React.createElement("h4", {className: "rich-presence-filter-section-title"}, "Blacklisted Activities"),
+                    React.createElement("h4", {className: "rich-presence-filter-section-title"}, "Черный список активностей"),
                     React.createElement("p", {className: "rich-presence-filter-section-desc"},
-                        "Activities matching these names will be blocked from showing in your profile."
+                        "Активности из этого списка не будут отображаться в вашем профиле"
                     ),
                     
                     React.createElement("div", null,
@@ -282,13 +337,13 @@ module.exports = class RichPresenceFilter {
                         React.createElement("input", {
                             type: "text",
                             value: newActivity,
-                            placeholder: "Enter activity name to block",
+                            placeholder: "Впишите название активности которую хотите фильтровать...",
                             onChange: e => setNewActivity(e.target.value),
                             onKeyDown: e => e.key === "Enter" && handleAddActivity()
                         }),
                         React.createElement("button", {
                             onClick: handleAddActivity
-                        }, "Add Activity")
+                        }, "Add")
                     )
                 )
             );
