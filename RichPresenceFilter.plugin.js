@@ -1,8 +1,8 @@
 /**
  * @name RichPresenceFilter
- * @description Фильтрует активность по String blackList из настроек
- * @version 2.2.0
- * @author HolyLightRU
+ * @description Фильтрует RichPresence активность по блэклисту из настроек
+ * @version 2.2.1
+ * @author HolyLight
  * @source https://github.com/HolyLightRU/RichPresenceFilterBDPlugin
  */
 
