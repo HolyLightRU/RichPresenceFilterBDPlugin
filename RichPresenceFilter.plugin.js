@@ -1,7 +1,7 @@
 /**
  * @name RichPresenceFilter
  * @description Фильтрует RichPresence активность по блэклисту из настроек
- * @version 2.2.2
+ * @version 2.2.3
  * @author HolyLight
  * @source https://github.com/HolyLightRU/RichPresenceFilterBDPlugin
  */
@@ -26,16 +26,18 @@ module.exports = class RichPresenceFilter {
     start() {
         this.patchActivityUpdate();
         
-        BdApi.injectCSS("RichPresenceFilter", `
-            .rich-presence-filter-settings {
-                padding: 20px;
-                background: rgba(25, 28, 36, 0.8);
-                border-radius: 12px;
-                font-family: 'Whitney', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-                border: 1px solid rgba(255, 143, 171, 0.2);
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-                backdrop-filter: blur(10px);
-            }
+        const style = document.createElement('style');
+        style.id = 'RichPresenceFilterCSS';
+        style.textContent = `
+        .rich-presence-filter-settings {
+            padding: 20px;
+            background: rgba(25, 28, 36, 0.8);
+            border-radius: 12px;
+            font-family: 'Whitney', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            border: 1px solid rgba(255, 143, 171, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
             
             .rich-presence-filter-header {
                 display: flex;
@@ -210,18 +212,21 @@ module.exports = class RichPresenceFilter {
             .rich-presence-filter-add button:active {
                 transform: translateY(0);
             }
-        `);
+        `;
+        document.head.appendChild(style);
     }
 
     stop() {
         BdApi.Patcher.unpatchAll("RichPresenceFilter");
-        BdApi.clearCSS("RichPresenceFilter");
+        const style = document.getElementById('RichPresenceFilterCSS');
+        if (style) style.remove();
     }
 
     patchActivityUpdate() {
-        const rpcModule = this.api.Webpack.getModule(this.api.Webpack.Filters.byKeys("dispatch", "_subscriptions"));
+        // Получаем модуль RPC через поиск по строковым ключам
+        const rpcModule = this.api.Webpack.getModule(m => m?.default?.dispatch && m?.default?._subscriptions);
         if (rpcModule) {
-            BdApi.Patcher.before("RichPresenceFilter", rpcModule, "dispatch", (_, args) => {
+            BdApi.Patcher.before("RichPresenceFilter", rpcModule.default, "dispatch", (_, args) => {
                 if (!this.settings.enabled) return;
                 
                 const [action] = args;
@@ -272,7 +277,8 @@ module.exports = class RichPresenceFilter {
             });
         }
 
-        const presenceStore = this.api.Webpack.getModule(this.api.Webpack.Filters.byProps("getActivities"));
+        // Получаем PresenceStore через поиск по методам
+        const presenceStore = this.api.Webpack.getModule(m => m?.getActivities && m?.getLocalActivity);
         if (presenceStore) {
             BdApi.Patcher.after("RichPresenceFilter", presenceStore, "getActivities", (_, __, res) => {
                 if (!this.settings.enabled || !res) return res;
@@ -297,7 +303,8 @@ module.exports = class RichPresenceFilter {
             });
         }
 
-        const ipcModule = this.api.Webpack.getModule(this.api.Webpack.Filters.byKeys("RPCServer"));
+        // Получаем IPC модуль через поиск по свойству
+        const ipcModule = this.api.Webpack.getModule(m => m?.RPCServer);
         if (ipcModule) {
             BdApi.Patcher.before("RichPresenceFilter", ipcModule, "handleSocketMessage", (_, args) => {
                 if (!this.settings.enabled) return;
